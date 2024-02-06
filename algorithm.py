@@ -48,12 +48,7 @@ class ObsBoundReInit():
 
         # Create the contours on the separate axis
         contours = ax_contours.contour(xx, yy, f, levels=levels)
-
-        # Optionally, you can add a background filled contour using ax_contours.contourf:
-        # ax_contours.contourf(xx, yy, f, levels=levels, cmap='viridis', alpha=0.5)
-
         plt.close(fig_contours)  # Close the figure to prevent it from being displayed
-
         # plt.scatter(self.cent_prev[0], self.cent_prev[1])
         return contours
 
