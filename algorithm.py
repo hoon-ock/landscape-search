@@ -106,7 +106,7 @@ class ObsBoundReInit():
     #     update_rate = np.sqrt(np.sum(update**2))
     #     return self.last + update, update_rate
     def update_position(self, grad, vn):
-        numer = self.beta * (1 + self.increase(vn) / self.k)
+        numer = self.beta * (1 + vn / self.k)
         denorm = np.sqrt(np.sum(grad**2)+0.0001)
         update = -numer/denorm * grad
         update_rate = np.sqrt(np.sum(update**2))
