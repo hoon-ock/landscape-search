@@ -132,7 +132,7 @@ def random_init_point(x_limits, y_limits, E_limits=(0, 1)):
     return initial_point.reshape(1, 3)
 
 def target_init_point(x_target, y_target, std=0.1):
-    initial_coordinate = np.array([-0.9, 1.4, np.random.uniform(0, 1)])
+    initial_coordinate = np.array([x_target, y_target, np.random.uniform(0, 1)])
     noise = np.random.normal(0, std, size=3)
     initial_coordinate += noise
     return initial_coordinate.reshape(1, 3)
