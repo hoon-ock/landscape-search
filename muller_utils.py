@@ -131,6 +131,73 @@ def random_init_point(x_limits, y_limits, E_limits=(0, 1)):
 
     return initial_point.reshape(1, 3)
 
+
+def random_init_point_with_grid(x_limits, y_limits, E_limits=(0, 1), grid_interval=None):
+    """
+    Generates a random initial point from a grid within the specified limits for x, y, and E dimensions and returns
+    the grid along with the random point. The grid is created within x_limits and y_limits with an optional interval.
+
+    Parameters:
+    - x_limits: Tuple of (min, max) for x dimension.
+    - y_limits: Tuple of (min, max) for y dimension.
+    - E_limits: Tuple of (min, max) for E dimension, default is (0, 1).
+    - grid_interval: Tuple of intervals for the grid in x and y dimensions. If None, a default interval is calculated.
+
+    Returns:
+    - A tuple containing:
+        - A numpy array representing the random point in three dimensions (x, y, E).
+        - The x and y grid points as two numpy arrays.
+    """
+    x_min, x_max = x_limits
+    y_min, y_max = y_limits
+    E_min, E_max = E_limits
+
+    if grid_interval is None:
+        # Default interval calculation (let's assume 0.1 for both dimensions for demonstration)
+        grid_interval_x = 0.1
+        grid_interval_y = 0.1
+    else:
+        grid_interval_x, grid_interval_y = grid_interval
+
+    # Create grid points for x and y
+    x_grid = np.arange(x_min, x_max, grid_interval_x)
+    y_grid = np.arange(y_min, y_max, grid_interval_y)
+
+    # Select a random index for x and y points
+    random_x_index = np.random.randint(0, len(x_grid))
+    random_y_index = np.random.randint(0, len(y_grid))
+
+    # Use the random index to select the initial x and y
+    initial_x = x_grid[random_x_index]
+    initial_y = y_grid[random_y_index]
+
+    # Generate a random value for the E dimension within its limits
+    initial_E = np.random.uniform(E_min, E_max)
+
+    # Create the initial point as a numpy array in three dimensions (x, y, E)
+    initial_point = np.array([initial_x, initial_y, initial_E])
+
+    # Return the initial point and the grid
+    return (initial_point.reshape(1, 3), x_grid, y_grid)
+
+def get_grid_intersection_points(x_grid, y_grid, E_limits=(0, 1)):
+    """
+    Generates a list of all intersection points in a grid defined by x and y grid points.
+
+    Parameters:
+    - x_grid: Numpy array of x grid points.
+    - y_grid: Numpy array of y grid points.
+
+    Returns:
+    - A list of tuples, where each tuple represents the coordinates (x, y) of an intersection point.
+    """
+    intersection_points = []
+    for x in x_grid:
+        for y in y_grid:
+            initial_E = np.random.uniform(E_limits[0], E_limits[1])
+            intersection_points.append([x, y, initial_E])
+    return np.array(intersection_points).reshape(-1, 3)
+
 def target_init_point(x_target, y_target, std=0.1):
     initial_coordinate = np.array([x_target, y_target, np.random.uniform(0, 1)])
     noise = np.random.normal(0, std, size=3)
@@ -168,3 +235,17 @@ def find_region_change(traj_all_save, threshold=0.05):
 
 def deepest_well_escape_frame(iteration_counter, large_batch_size, small_batch_size):
     return large_batch_size + small_batch_size*(iteration_counter[1]-1)
+
+
+def sucess_cluster_identification(all_traj, center_points, distance_threshold, number_threshold):
+    success_count = 0
+    for center_point in center_points:
+        count_within_threshold = 0
+        for traj_point in all_traj:
+            distance = np.sqrt(np.sum((center_point - traj_point) ** 2))
+            if distance <= distance_threshold:
+                count_within_threshold += 1
+        if count_within_threshold > number_threshold:
+            success_count += 1
+    # total_cluster_numbers = len(center_points)
+    return success_count
