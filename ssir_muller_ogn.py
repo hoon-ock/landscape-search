@@ -13,7 +13,7 @@ from muller_utils import (ObsBoundReInit,
                           target_init_point, 
                           find_region_change, 
                           deepest_well_escape_frame, 
-                          sucess_cluster_identification)
+                          success_cluster_identification)
 
 import os, tqdm, pickle, yaml
 from datetime import datetime
@@ -206,12 +206,13 @@ for init in tqdm.tqdm(initial_points):
     # breakpoint()
     if E_mean < 10000:
         mean_x = np.mean(traj_all[:,0])
-        num_identified_cluster = sucess_cluster_identification(traj_all[:,:2], 
+        num_identified_cluster = success_cluster_identification(traj_all[:,:2], 
                                                            center_points, 
                                                            distance_threshold=0.1, 
                                                            number_threshold=5)
         total_num_success += num_identified_cluster
         total_num_clusters += len(center_points)
+        init = np.append(init, np.array([[num_identified_cluster]]), axis=1)
         valid_init.append(init)
         plot_save_file = f'{init_no}_{num_identified_cluster}.png'
     else:
@@ -247,6 +248,9 @@ with open(os.path.join(directory, 'ssir.txt'), 'w') as file:
     file.write(str(ssir))
     file.write('\n')
 
+with open(os.path.join(directory, 'valid_init.pkl'), 'wb') as file:  
+    pickle.dump(valid_init, file)
+
 # Plot the starting points
 pes.plot(ax=plt.gca(), 
          minx=x_limits[0]-e, maxx=x_limits[1]+e, 
@@ -263,9 +267,22 @@ for y in grid_y:
 
 valid_initial_points = np.vstack(valid_init) #np.array(valid_init)
 
-plt.plot(valid_initial_points[:, 0], 
-         valid_initial_points[:, 1], 
-         '.', color='k', markersize=6)
+# plt.plot(valid_initial_points[:, 0], 
+#          valid_initial_points[:, 1], 
+#          '.', color='k', markersize=6)
+# Define colors for each value
+colors = {1: 'red', 2: 'orange', 3: 'green'}
+
+# Loop through each point and plot it with the corresponding color
+for point in valid_initial_points:
+    plt.plot(point[0], point[1], '.', 
+             color=colors[point[3]], markeredgecolor='black', markersize=15)
+    # plt.text(point[0], point[1], f'{point[3]}', color='black', fontsize=9, ha='right', va='bottom')
+    #plt.text(point[0], point[1], f'{int(point[3])}', color='black', fontsize=11) #, ha='right', va='bottom')
+for i in range(len(colors)):
+    plt.plot([], [], '.', color=list(colors.values())[i], 
+             markeredgecolor='black', markersize=12, label=f'{i+1} success')
+plt.legend(fontsize=ft-5, loc='lower left', framealpha=0.5)
 
 # for center in center_points:
 #     plt.plot(center[0], center[1], 'x', color='r', markersize=5)
