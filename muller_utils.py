@@ -9,11 +9,12 @@ class ObsBoundReInit():
     Adam-inspired reinitialization method
     Direction of update is determined by the gradient density
     '''
-    def __init__(self, traj, cent_prev, inc_prev, delta, k):
+    def __init__(self, traj, cent_prev, inc_prev, delta, k, beta=1.0):
         self.traj = traj 
         self.inc_prev = inc_prev
         self.delta = delta
         self.k = k 
+        self.beta = beta
         self.x = traj[1:,0] # not considering init point
         self.y = traj[1:,1] # not considering init point
         self.cent = np.array([[self.x.mean()], [self.y.mean()]])
@@ -95,7 +96,7 @@ class ObsBoundReInit():
         return g * (self.inc_prev + g)
 
     def update_position(self, grad, vn):
-        numer = 1 + vn / self.k
+        numer = self.beta * (1 + vn / self.k)
         denorm = np.sqrt(np.sum(grad**2)+0.0001)
         update = -numer/denorm * grad
         update_rate = np.sqrt(np.sum(update**2))
@@ -237,7 +238,14 @@ def deepest_well_escape_frame(iteration_counter, large_batch_size, small_batch_s
     return large_batch_size + small_batch_size*(iteration_counter[1]-1)
 
 
-def sucess_cluster_identification(all_traj, center_points, distance_threshold, number_threshold):
+def success_cluster_identification(all_traj, center_points, distance_threshold, number_threshold):
+    '''
+    all_traj: np.array, shape=(n, 2) where n is the number of frames in the trajectory
+    center_points: np.array, shape=(m, 2) where m is the number of center points
+    distance_threshold: float, the distance threshold for the cluster identification
+    number_threshold: int, the number of points within the distance threshold for the cluster identification
+    '''
+    
     success_count = 0
     for center_point in center_points:
         count_within_threshold = 0
