@@ -14,8 +14,8 @@ random_seed = 0
 random.seed(0)
 beta = 0.1
 k = 100
-iter_frame = 3000 # total number of steps
-large_batch = 100
+iter_frame = 10000 # total number of steps
+large_batch = 2000
 small_batch = 30
 contour_frac = 0.75
 init_traj_index = 1

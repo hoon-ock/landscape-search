@@ -38,6 +38,7 @@ class ObsBoundReInit_Algorithm():
         self.outer_results = {}
         self.inner_results = {}
         self.iteration_counter = {} # {outer_loop_index: number of inner loop iterations}
+        self.coord_index = []
         self.save_path = save_path 
 
     def run_simulation(self):
@@ -55,7 +56,8 @@ class ObsBoundReInit_Algorithm():
             while self.centroid_is_inside_contour():
                 prev_last = self.last
                 proposed_init, update_rate = self.update_position()
-                scout_traj = self.get_trajectory(proposed_init, self.small_batch)
+                scout_traj, scout_traj_index = self.get_trajectory(proposed_init, self.small_batch)
+                self.coord_index.append(scout_traj_index)
                 self.init = scout_traj[0]
                 self.last = scout_traj[-1]
                 self.cent = np.mean(scout_traj[1:], axis=0)
@@ -75,7 +77,8 @@ class ObsBoundReInit_Algorithm():
         self.save_results()
 
     def run_large_batch(self):
-        self.collected_outer_trajs = self.get_trajectory(self.init, self.large_batch) # self.init
+        self.collected_outer_trajs, outer_traj_index = self.get_trajectory(self.init, self.large_batch) # self.init
+        self.coord_index.append(outer_traj_index) 
         # update kde, centroid, last point, contours
         self.kde = st.gaussian_kde(self.collected_outer_trajs.T)
         self.cent = np.mean(self.collected_outer_trajs, axis=0)
@@ -85,9 +88,11 @@ class ObsBoundReInit_Algorithm():
     def get_trajectory(self, init_point, n_frames):
         x, y = init_point
         candidate_trajs = []
+        candidate_trajs_index = []
         global_closest_dist = float('inf')
         global_closest_traj = None
         global_closest_index = None
+        global_closest_traj_index = None
 
         for idx, traj in self.traj_dict.items():
             for i, point in enumerate(traj):
@@ -95,16 +100,36 @@ class ObsBoundReInit_Algorithm():
                 if dist < self.threshold:
                     if len(traj[i:]) >= n_frames:
                         candidate_trajs.append(traj[i:i+n_frames])
+                        #self.coord_index.update({idx: (i, i+n_frames)})
+                        candidate_trajs_index.append((idx, i, i+n_frames))
                         break
                 elif dist < global_closest_dist:
                     global_closest_dist = dist
                     global_closest_traj = traj
                     global_closest_index = i
+                    global_closest_traj_index = idx
 
         # Only append the globally closest trajectory if no trajectories meet the threshold criteria            
         if (not candidate_trajs) and (global_closest_traj is not None) and (len(global_closest_traj[global_closest_index:]) >= n_frames):
             candidate_trajs.append(global_closest_traj[global_closest_index:global_closest_index+n_frames])
-        return random.choice(candidate_trajs) if candidate_trajs else None
+            candidate_trajs_index.append((global_closest_traj_index, global_closest_index, global_closest_index+n_frames))
+            #self.coord_index.update({global_closest_traj_index: (global_closest_index, global_closest_index+n_frames)})
+        
+        # Choose a random item from the list
+        # breakpoint()
+        #chosen_traj = random.choice(candidate_trajs) if candidate_trajs else None
+        #chosen_index = candidate_trajs.index(chosen_traj) if chosen_traj else None
+        if candidate_trajs:
+            # Select a random index within the range of candidate_trajs' indices
+            chosen_index = random.randint(0, len(candidate_trajs) - 1)
+
+            # Use the chosen index to select the trajectory
+            chosen_traj = candidate_trajs[chosen_index]
+        else:
+            chosen_index = None
+            chosen_traj = None
+        return chosen_traj, candidate_trajs_index[chosen_index]
+        #return random.choice(candidate_trajs) if candidate_trajs else None
     
     def gradient_at_point(self):
         x, y = self.last
@@ -172,7 +197,8 @@ class ObsBoundReInit_Algorithm():
         results = {'all_traj': self.collected_all_trajs, 
                    'outer': self.outer_results, 
                    'inner': self.inner_results, 
-                   'iteration_counter': self.iteration_counter}
+                   'iteration_counter': self.iteration_counter,
+                   'coord_index': self.coord_index}
         with open(os.path.join(self.save_path, 'results.pkl'), 'wb') as f:
             pickle.dump(results, f)
 

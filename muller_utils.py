@@ -257,3 +257,17 @@ def success_cluster_identification(all_traj, center_points, distance_threshold, 
             success_count += 1
     # total_cluster_numbers = len(center_points)
     return success_count
+
+def reconstruct_energy(data, bin_number=500):
+    counts, bins = np.histogram(data, bins=bin_number)
+
+    anchors = (bins[1:] + bins[:-1]) / 2
+
+    probs = counts / np.sum(counts)
+
+    anchors = anchors[np.where(probs > 0.0001)]
+    probs = probs[np.where(probs > 0.0001)]
+
+    f = -np.log(probs)
+    fn = f - np.min(f)
+    return anchors, fn 
