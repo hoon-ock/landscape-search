@@ -17,6 +17,27 @@ from muller_utils import (ObsBoundReInit,
 
 import os, tqdm, pickle, yaml
 from datetime import datetime
+import argparse 
+argparser = argparse.ArgumentParser()
+argparser.add_argument('--dir', type=str)
+argparser.add_argument('--interval', type=float, default=1.5)
+argparser.add_argument('--num_step', type=int, default=2000)
+argparser.add_argument('--seed', type=int, default=1)
+
+parent_dir = os.path.join( 'results/mod_muller/base', argparser.parse_args().dir)
+interval = argparser.parse_args().interval
+num_step = argparser.parse_args().num_step
+seed = argparser.parse_args().seed
+
+directory = os.path.join(parent_dir, 'ssir')
+if not os.path.exists(directory):
+    os.makedirs(directory)
+# # ====================================================================
+# read yaml file
+params = yaml.safe_load(open(os.path.join(parent_dir, 'param.yaml'), 'r'))
+setting = {'interval': interval, 'num_step': num_step, 'seed': seed}
+with open(os.path.join(directory, 'setting.yaml'), 'w') as file:
+    yaml.dump(setting, file)
 
 # ====================================================================
 # Grid parameters
@@ -24,23 +45,22 @@ x_limits = (-3.5, 2.0)
 y_limits = (-1.2, 3.5)
 x_limits_grid = (-3.0, 1.6)
 y_limits_grid = (-1.1, 3.4)
-grid_interval = (1.5, 1.5)
+grid_interval = (interval, interval)
 center_points = np.array([[-2.7, 2.8], [-0.9, 1.3], [0.6, -0.1]])
 ft = 15
 e = 0.2
 # Observation Guided Navigation parameters
-random_seed = 1
-np.random.seed(random_seed)
-total_step = 10000       # total number of steps
+np.random.seed(seed)
+total_step = num_step #2000        # total number of steps
 
 # Brownian simulation parameters
 ## each particle is totally independent, propagating under the same potential
-nParticles = 1  
-temp_non_dimensional = 750
-mass_non_dimensional = 1.0
-friction_non_dimensional = 100
-timestep_non_dimensional = 10.0
-step = 100
+nParticles = params['nParticles']
+temp_non_dimensional = params['temperature']
+mass_non_dimensional = params['mass']
+friction_non_dimensional = params['friction']   
+timestep_non_dimensional = params['timestep']
+step = params['step']
 temperature = temp_non_dimensional * kelvin
 mass = mass_non_dimensional * dalton
 friction = friction_non_dimensional / picosecond
@@ -51,33 +71,6 @@ timestep = timestep_non_dimensional * femtosecond
 # Get initial points on the grid
 _, grid_x, grid_y = random_init_point_with_grid(x_limits_grid, y_limits_grid, grid_interval=grid_interval)
 initial_points = get_grid_intersection_points(grid_x, grid_y)
-
-# Get the current time
-current_time = datetime.now()
-formatted_time = current_time.strftime('%y%m%d_%H%M')
-directory = f"results/mod_muller/base/ssir_{formatted_time}"
-if not os.path.exists(directory):
-    os.makedirs(directory)
-print(f"Results will be saved in {directory}")
-
-# Define all other parameters and include them in a dictionary
-parameters = {
-    'start_mode': 'ssir',
-    'total_step': total_step,
-    'random_seed': random_seed,
-    'nParticles': nParticles,
-    'mass': mass_non_dimensional,
-    'temperature': temp_non_dimensional,
-    'friction': friction_non_dimensional,
-    'timestep': timestep_non_dimensional,
-    'step': step,
-    'grid_interval_x': grid_interval[0],
-    'grid_interval_y': grid_interval[1],
-}
-
-# Serialize and save as a YAML file
-with open(os.path.join(directory, 'param.yaml'), 'w') as file:
-    yaml.dump(parameters, file)
 
 # Brownian simulation set-up
 system = mm.System()
@@ -90,7 +83,6 @@ system.addForce(pes)
 
 integrator = mm.LangevinIntegrator(temperature, friction, timestep)
 context = mm.Context(system, integrator)
-
 
 # traj_all_save = []
 init_no = 1
@@ -115,8 +107,6 @@ for init in tqdm.tqdm(initial_points):
         traj[i] = np.array([p[0], p[1], E])
         integrator.step(step)
     
-
-
     traj_all = traj #np.vstack(traj_all_save)
     E_mean = np.mean(traj_all[:,2])
      # success identification of the cluster
@@ -180,13 +170,8 @@ for x in grid_x:
 # Plot horizontal lines for each y_grid point
 for y in grid_y:
     plt.axhline(y, color='lightgray', linestyle='--')
-# breakpoint()
 
 valid_initial_points = np.vstack(valid_init) #np.array(valid_init)
-
-# plt.plot(valid_initial_points[:, 0], 
-#          valid_initial_points[:, 1], 
-#          '.', color='k', markersize=6)
 
 # Define colors for each value
 colors = {1: 'red', 2: 'orange', 3: 'green'}
@@ -195,16 +180,11 @@ colors = {1: 'red', 2: 'orange', 3: 'green'}
 for point in valid_initial_points:
     plt.plot(point[0], point[1], '.', 
              color=colors[point[3]], markeredgecolor='black', markersize=15)
-    # plt.text(point[0], point[1], f'{point[3]}', color='black', fontsize=9, ha='right', va='bottom')
-    #plt.text(point[0], point[1], f'{int(point[3])}', color='black', fontsize=11) #, ha='right', va='bottom')
+
 for i in range(len(colors)):
     plt.plot([], [], '.', color=list(colors.values())[i], 
              markeredgecolor='black', markersize=12, label=f'{i+1} success')
 plt.legend(fontsize=ft-5, loc='lower left', framealpha=0.5)
-
-
-# for center in center_points:
-#     plt.plot(center[0], center[1], 'x', color='r', markersize=5)
 
 plt.xlabel('$x_1$', fontsize=ft)
 plt.ylabel('$x_2$', fontsize=ft)
