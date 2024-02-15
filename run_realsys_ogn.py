@@ -15,8 +15,8 @@ random.seed(0)
 beta = 0.1
 k = 100
 iter_frame = 10000 # total number of steps
-large_batch = 2000
-small_batch = 30
+large_batch = 500
+small_batch = 40
 contour_frac = 0.75
 init_traj_index = 1
 threshold = 0.02 # distance threshold for the candidate trajectory selection
@@ -49,6 +49,7 @@ parameters = {
     'boundary_frac': contour_frac,
     'feature1_path': feature1_path,
     'feature2_path': feature2_path,
+    'threshold': threshold
 }
 
 # Serialize and save as a YAML file

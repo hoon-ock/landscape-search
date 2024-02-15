@@ -285,3 +285,30 @@ def reconstruct_energy(data, bin_number=500):
     f = -np.log(probs)
     fn = f - np.min(f)
     return anchors, fn 
+
+def find_shift_index(coordinates, shift_axis, threshold):
+    """
+    Finds the index of the frame where a significant shift happens along a specified axis.
+
+    Parameters:
+    - coordinates: A 2D numpy array of shape (n, 2) where n is the number of frames, and each row contains (x, y) coordinates.
+    - shift_axis: A string, either 'x' or 'y', indicating the axis along which to detect the shift.
+    - threshold: A float, the minimum difference between consecutive frames to consider as a shift.
+
+    Returns:
+    - The index of the first frame where the shift exceeds the threshold, or None if no such shift is found.
+    """
+    
+    axis_index = 0 if shift_axis == 'x' else 1  # 0 for x-axis, 1 for y-axis
+    
+    # Find the first index
+    if coordinates[:, axis_index][0] > threshold:
+        shift_indices = np.where(coordinates[:, axis_index] < threshold)[0]
+    elif coordinates[:, axis_index][0] < threshold:
+        shift_indices = np.where(coordinates[:, axis_index] > threshold)[0]
+
+    if len(shift_indices) > 0:
+        return shift_indices[0] # grab the first index
+    else:
+        print('no shift')
+        return None  # No shift found

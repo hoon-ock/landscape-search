@@ -7,50 +7,50 @@ import scipy.stats as st
 from realsys_utils import *
 from datetime import datetime
 import yaml, pickle
+import argparse 
+argparser = argparse.ArgumentParser()
+argparser.add_argument('--dir', type=str)
+argparser.add_argument('--interval', type=float, default=1.5)
+argparser.add_argument('--num_step', type=int, default=2000)
+argparser.add_argument('--seed', type=int, default=1)
+argparser.add_argument('--last_index', type=int, default=28)
+
+parent_dir = os.path.join( 'results/peptide/ogn', argparser.parse_args().dir)
+interval = argparser.parse_args().interval
+num_step = argparser.parse_args().num_step
+seed = argparser.parse_args().seed
+last_index = argparser.parse_args().last_index
+
+directory = os.path.join(parent_dir, 'ssir')
+if not os.path.exists(directory):
+    os.makedirs(directory)
+# # ====================================================================
+# read yaml file
+params = yaml.safe_load(open(os.path.join(parent_dir, 'param.yaml'), 'r'))
+setting = {'interval': interval, 'num_step': num_step, 'seed': seed}
+with open(os.path.join(directory, 'setting.yaml'), 'w') as file:
+    yaml.dump(setting, file)
 
 ####################################################################
 # Set the parameters
-beta = 0.1
-k = 100
-iter_frame = 3000 # total number of steps
-large_batch = 100
-small_batch = 30
-contour_frac = 0.75
-init_traj_index = 1
-threshold = 0.02 # distance threshold for the candidate trajectory selection
-feature1_path = 'data/fspeptide/ALA9-O_ALA9-C_ALA9-N.pkl'
-feature2_path = 'data/fspeptide/ARG20-CB_ARG20-CD_ARG20-NE.pkl'
+beta = params['beta']
+k = params['k']
+iter_frame = num_step # total number of steps
+large_batch = params['large_batch_size']
+small_batch = params['small_batch_size']
+contour_frac = params['boundary_frac']
+threshold = params['threshold'] # distance threshold for the candidate trajectory selection
+feature1_path = params['feature1_path']
+feature2_path = params['feature2_path']
 ####################################################################
 
-# Get the current time
-current_time = datetime.now()
-formatted_time = current_time.strftime('%y%m%d_%H%M')
-directory = f"results/peptide/ogn/ssir_{formatted_time}"
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-# Define all other parameters and include them in a dictionary
-parameters = {
-    'total_step': iter_frame,
-    'large_batch_size': large_batch,
-    'small_batch_size': small_batch,
-    'k': k,
-    'beta': beta,
-    'boundary_frac': contour_frac,
-    'feature1_path': feature1_path,
-    'feature2_path': feature2_path,
-}
-
-# Serialize and save as a YAML file
-with open(os.path.join(directory, 'param.yaml'), 'w') as file:
-    yaml.dump(parameters, file)
 
 # Run Simulation
 feature1 = pd.read_pickle(feature1_path) # a9
 feature2 = pd.read_pickle(feature2_path) #20
 traj = combine_trajectories(feature1, feature2)
 
-for i in tqdm.tqdm(range(1,29)):
+for i in tqdm.tqdm(range(1,last_index+1)):
     save_path = os.path.join(directory, f'traj_{i}')
     objSim = ObsBoundReInit_Algorithm(traj, 
                                       i, 
