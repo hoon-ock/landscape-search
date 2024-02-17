@@ -286,29 +286,71 @@ def reconstruct_energy(data, bin_number=500):
     fn = f - np.min(f)
     return anchors, fn 
 
-def find_shift_index(coordinates, shift_axis, threshold):
-    """
-    Finds the index of the frame where a significant shift happens along a specified axis.
+# def find_shift_index(coordinates, shift_axis, shift_threshold, num_threshold):
+#     """
+#     Finds the index of the frame where a significant shift happens along a specified axis.
 
-    Parameters:
-    - coordinates: A 2D numpy array of shape (n, 2) where n is the number of frames, and each row contains (x, y) coordinates.
-    - shift_axis: A string, either 'x' or 'y', indicating the axis along which to detect the shift.
-    - threshold: A float, the minimum difference between consecutive frames to consider as a shift.
+#     Parameters:
+#     - coordinates: A 2D numpy array of shape (n, 2) where n is the number of frames, and each row contains (x, y) coordinates.
+#     - shift_axis: A string, either 'x' or 'y', indicating the axis along which to detect the shift.
+#     - threshold: A float, the minimum difference between consecutive frames to consider as a shift.
 
-    Returns:
-    - The index of the first frame where the shift exceeds the threshold, or None if no such shift is found.
-    """
+#     Returns:
+#     - The index of the first frame where the shift exceeds the threshold, or None if no such shift is found.
+#     """
     
-    axis_index = 0 if shift_axis == 'x' else 1  # 0 for x-axis, 1 for y-axis
+#     axis_index = 0 if shift_axis == 'x' else 1  # 0 for x-axis, 1 for y-axis
     
-    # Find the first index
-    if coordinates[:, axis_index][0] > threshold:
-        shift_indices = np.where(coordinates[:, axis_index] < threshold)[0]
-    elif coordinates[:, axis_index][0] < threshold:
-        shift_indices = np.where(coordinates[:, axis_index] > threshold)[0]
+#     # Find the first index
+#     if coordinates[:, axis_index][0] > shift_threshold:
+#         shift_indices = np.where(coordinates[:, axis_index] < shift_threshold)[0]
+#     elif coordinates[:, axis_index][0] < shift_threshold:
+#         shift_indices = np.where(coordinates[:, axis_index] > shift_threshold)[0]
 
-    if len(shift_indices) > 0:
-        return shift_indices[0] # grab the first index
+#     if len(shift_indices) > 0:
+#         for i in range(1, len(shift_indices)):
+#             #if shift_indices[i] - shift_indices[i-1] > num_threshold:
+#             if (coordinates[:, axis_index][0] - shift_threshold) * (coordinates[i:i+num_threshold, axis_index] - shift_threshold).all():    
+#                 return shift_indices[i]
+#             else:
+#                 print('not a stable transition')
+#                 return None
+#             # else:
+#             #     return shift_indices[0] # grab the first index
+#         #return shift_indices[0] # grab the first index
+#     else:
+#         print('no shift')
+#         return None  # No shift found
+
+def find_shift_index(coordinates, shift_axis, shift_threshold, num_threshold):
+    """
+    Finds the index of the frame where a significant and stable shift happens along a specified axis,
+    either above or below a given threshold, depending on the initial value.
+    """
+    # Determine axis index based on the specified shift axis
+    axis_index = 0 if shift_axis == 'x' else 1
+    
+    # Determine the direction of the threshold crossing based on the initial value
+    if coordinates[0, axis_index] > shift_threshold:
+        # Looking for the first instance of crossing below the threshold
+        target_condition = lambda val: val < shift_threshold
     else:
-        print('no shift')
-        return None  # No shift found
+        # Looking for the first instance of crossing above the threshold
+        target_condition = lambda val: val > shift_threshold
+    
+    consecutive_count = 0  # Counter for consecutive frames meeting the condition
+    for i in range(len(coordinates)):
+        if target_condition(coordinates[i, axis_index]):
+            consecutive_count += 1  # Increment if current frame meets the condition
+            if consecutive_count == 1:
+                # Mark the start of a potential shift
+                first_shift_index = i
+            if consecutive_count >= num_threshold:
+                # Stable shift detected
+                return first_shift_index
+        else:
+            # Reset count if the sequence is broken
+            consecutive_count = 0
+
+    # If no stable shift is found
+    return None

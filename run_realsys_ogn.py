@@ -11,14 +11,14 @@ import yaml, pickle
 ####################################################################
 # Set the parameters
 random_seed = 0
-random.seed(0)
+random.seed(random_seed)
 beta = 0.1
 k = 100
 iter_frame = 10000 # total number of steps
-large_batch = 500
+large_batch = 400
 small_batch = 40
 contour_frac = 0.75
-init_traj_index = 1
+init_traj_index = 4
 threshold = 0.02 # distance threshold for the candidate trajectory selection
 feature1_path = 'data/fspeptide/ALA9-O_ALA9-C_ALA9-N.pkl'
 feature2_path = 'data/fspeptide/ARG20-CB_ARG20-CD_ARG20-NE.pkl'
