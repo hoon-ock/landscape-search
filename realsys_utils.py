@@ -235,13 +235,16 @@ def iteration_counter_converter(dictionary):
     return result
 
 
-def density_contour(traj, xlim=[1.25, 2.95], ylim=[1.25, 2.95], xlabel='A9 O-C-N (rad)', ylabel='R20 O-CA-CB (rad)'):
+def density_contour(traj, 
+                    xlim=[1.25, 2.95], ylim=[1.25, 2.95], 
+                    xlabel='A9 O-C-N (rad)', ylabel='R20 O-CA-CB (rad)',
+                    fontsize=18):
     '''Plot the density contours''' 
     #data = np.concatenate(list(self.traj_dict.values()))
     x = traj[:, 0]
     y = traj[:, 1]
-    xmin, xmax = np.min(x)-0.1, np.max(x)+0.15
-    ymin, ymax = np.min(y)-0.1, np.max(y)+0.15
+    xmin, xmax = xlim[0], xlim[1] #np.min(x)-0.1, np.max(x)+0.15
+    ymin, ymax = ylim[0], ylim[1] #np.min(y)-0.1, np.max(y)+0.15
     xmargin = (xmax-xmin)/20
     ymargin = (ymax-ymin)/20
     minx, maxx = xmin-xmargin, xmax+xmargin
@@ -253,10 +256,11 @@ def density_contour(traj, xlim=[1.25, 2.95], ylim=[1.25, 2.95], xlabel='A9 O-C-N
     kde = st.gaussian_kde(kernel)
     density = kde(pos).reshape(xx.shape)
     CS = plt.contourf(xx, yy, density, 60, cmap=plt.cm.viridis.reversed())
-    plt.xlabel(xlabel, fontsize=15)
-    plt.ylabel(ylabel, fontsize=15)
+    plt.xlabel(xlabel, fontsize=fontsize)
+    plt.ylabel(ylabel, fontsize=fontsize)
     cbar = plt.colorbar(CS)
-    cbar.ax.set_ylabel('Density')
+    cbar.ax.set_ylabel('Density', fontsize=fontsize)
+    cbar.ax.tick_params(labelsize=fontsize-2)
 
 
 def get_data_for_figures(inner_results):
@@ -322,7 +326,7 @@ def reconstruct_energy(data, bin_number=500):
 #         print('no shift')
 #         return None  # No shift found
 
-def find_shift_index(coordinates, shift_axis, shift_threshold, num_threshold):
+def find_shift_index(coordinates, shift_axis, shift_threshold, num_threshold=10):
     """
     Finds the index of the frame where a significant and stable shift happens along a specified axis,
     either above or below a given threshold, depending on the initial value.

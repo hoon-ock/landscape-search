@@ -84,7 +84,7 @@ class MullerForce(mm.CustomExternalForce):
         return value
 
     # @classmethod
-    def plot(self, ax=None, minx=-3.0, maxx=2.0, miny=-1.0, maxy=3.0, **kwargs):
+    def plot(self, ax=None, minx=-3.0, maxx=2.0, miny=-1.0, maxy=3.0, fontsize=12, **kwargs):
         "Plot the Muller potential"
         grid_width = max(maxx-minx, maxy-miny) / 200.0
         ax = kwargs.pop('ax', None)
@@ -96,7 +96,8 @@ class MullerForce(mm.CustomExternalForce):
             ax = plt
         CS = ax.contourf(xx, yy, V.clip(max=200), 40, **kwargs)
         cbar = plt.colorbar(CS)
-        cbar.ax.set_ylabel('Potential Energy')
+        cbar.ax.set_ylabel('Potential Energy', fontsize=fontsize)  # Adjust label fontsize here
+        cbar.ax.tick_params(labelsize=fontsize-2)
 
 
 class ModifiedMullerForce(mm.CustomExternalForce):
@@ -138,20 +139,32 @@ class ModifiedMullerForce(mm.CustomExternalForce):
         return value
 
     # @classmethod
-    def plot(self, ax=None, minx=-3.5, maxx=2.0, miny=-1.0, maxy=3.5, **kwargs):
+    # def plot(self, ax=None, minx=-3.5, maxx=2.0, miny=-1.0, maxy=3.5, **kwargs):
+    #     "Plot the Muller potential"
+    #     grid_width = max(maxx-minx, maxy-miny) / 200.0
+    #     ax = kwargs.pop('ax', None)
+    #     xx, yy = np.mgrid[minx : maxx : grid_width, miny : maxy : grid_width]
+    #     V = self.potential(xx, yy)
+    #     # clip off any values greater than 200, since they mess up
+    #     # the color scheme
+    #     if ax is None:
+    #         ax = plt
+    #     CS = ax.contourf(xx, yy, V.clip(max=200), 40, **kwargs)
+    #     cbar = plt.colorbar(CS)
+    #     cbar.ax.set_ylabel('Potential Energy')
+
+    def plot(self, ax=None, minx=-3.5, maxx=2.0, miny=-1.0, maxy=3.5, fontsize=12, **kwargs):
         "Plot the Muller potential"
         grid_width = max(maxx-minx, maxy-miny) / 200.0
         ax = kwargs.pop('ax', None)
         xx, yy = np.mgrid[minx : maxx : grid_width, miny : maxy : grid_width]
         V = self.potential(xx, yy)
-        # clip off any values greater than 200, since they mess up
-        # the color scheme
         if ax is None:
             ax = plt
         CS = ax.contourf(xx, yy, V.clip(max=200), 40, **kwargs)
         cbar = plt.colorbar(CS)
-        cbar.ax.set_ylabel('Potential Energy')
-
+        cbar.ax.set_ylabel('Potential Energy', fontsize=fontsize)  # Adjust label fontsize here
+        cbar.ax.tick_params(labelsize=fontsize-2)  # Adjust tick label fontsize here
 
 def landscape(potential):
     if potential == 'Muller':

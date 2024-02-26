@@ -48,7 +48,7 @@ x_limits_grid = (-3.0, 1.3)
 y_limits_grid = (-1.2, 3.2)
 grid_interval = (interval, interval)
 center_points = np.array([[-0.55, 1.45], [-0.1, 0.45], [0.65, 0.02]])
-ft = 15
+ft = 18
 e = 0.2
 # Observation Guided Navigation parameters
 np.random.seed(seed)
@@ -187,11 +187,11 @@ for init in tqdm.tqdm(initial_points):
         n+=1
 
     traj_all = np.vstack(traj_all_save)
-    E_mean = np.mean(traj_all[:,2])
-     # success identification of the cluster
-    # breakpoint()
-    if E_mean < 10000:
-        mean_x = np.mean(traj_all[:,0])
+    # success identification of the cluster
+    # count number of data points within x_limit and y_limit
+    data_count = len(traj_all[(traj_all[:,0] > x_limits[0]) & (traj_all[:,0] < x_limits[1]) \
+                        & (traj_all[:,1] > y_limits[0]) & (traj_all[:,1] < y_limits[1])])
+    if data_count > num_step/2:
         num_identified_cluster = success_cluster_identification(traj_all[:,:2], 
                                                            center_points, 
                                                            distance_threshold=0.1, 
@@ -207,7 +207,8 @@ for init in tqdm.tqdm(initial_points):
     plt.close()
     pes.plot(ax=plt.gca(), 
          minx=x_limits[0]-e, maxx=x_limits[1]+e, 
-         miny=y_limits[0]-e, maxy=y_limits[1]+e)
+         miny=y_limits[0]-e, maxy=y_limits[1]+e,
+         fontsize=ft-4)
     
     colors = cm.inferno(np.linspace(0.8, 0.2))
     plt.plot(init[:, 0], init[:, 1], '*', 
@@ -222,6 +223,8 @@ for init in tqdm.tqdm(initial_points):
     plt.ylabel('$x_2$', fontsize=ft)
     plt.xlim(x_limits[0], x_limits[1])
     plt.ylim(y_limits[0], y_limits[1])
+    plt.xticks(fontsize=ft-3)
+    plt.yticks(fontsize=ft-3)
     plt.plot([], [], '.', markeredgecolor='black', c='orange', markersize=10, label='Data Point') 
     #plt.legend(fontsize=ft-5, loc='lower left', framealpha=0.5)
     plt.savefig(os.path.join(directory, plot_save_file), bbox_inches='tight', facecolor='w')
@@ -240,7 +243,8 @@ with open(os.path.join(directory, 'valid_init.pkl'), 'wb') as file:
 # Plot the starting points
 pes.plot(ax=plt.gca(), 
          minx=x_limits[0]-e, maxx=x_limits[1]+e, 
-         miny=y_limits[0]-e, maxy=y_limits[1]+e)
+         miny=y_limits[0]-e, maxy=y_limits[1]+e,
+         fontsize=ft-4)
 
 
 for x in grid_x:
@@ -270,4 +274,6 @@ plt.xlabel('$x_1$', fontsize=ft)
 plt.ylabel('$x_2$', fontsize=ft)
 plt.xlim(x_limits[0], x_limits[1])
 plt.ylim(y_limits[0], y_limits[1])
+plt.xticks(fontsize=ft-3)
+plt.yticks(fontsize=ft-3)
 plt.savefig(os.path.join(directory,'grid.png'), bbox_inches='tight', facecolor='w')
