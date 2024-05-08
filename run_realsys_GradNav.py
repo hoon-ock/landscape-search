@@ -1,12 +1,8 @@
-import numpy as np
 import pandas as pd
-import random, os, math, tqdm, pickle
-import scipy.stats as st
-
-
+import random, os
 from realsys_utils import *
 from datetime import datetime
-import yaml, pickle
+import yaml
 
 ####################################################################
 # Set the parameters
@@ -33,7 +29,7 @@ init_traj_index = 4 # candidate for deep well escape: 4, !6!
 # Get the current time
 current_time = datetime.now()
 formatted_time = current_time.strftime('%y%m%d_%H%M')
-directory = f"results/peptide/ogn/run_{formatted_time}"
+directory = f"results/peptide/GradNav/run_{formatted_time}"
 if not os.path.exists(directory):
     os.makedirs(directory)
 
@@ -61,14 +57,14 @@ feature1 = pd.read_pickle(feature1_path) # a9
 feature2 = pd.read_pickle(feature2_path) #20
 traj = combine_trajectories(feature1, feature2)
 
-objSim = ObsBoundReInit_Algorithm(traj, 
-                                  init_traj_index, 
-                                  beta, 
-                                  k,
-                                  large_batch, 
-                                  small_batch, 
-                                  iter_frame, 
-                                  contour_frac,
-                                  directory,  
-                                  threshold)
+objSim = GradNav_Peptide(traj, 
+                         init_traj_index, 
+                         beta, 
+                         k,
+                         large_batch, 
+                         small_batch, 
+                         iter_frame, 
+                         contour_frac,
+                         directory,  
+                         threshold)
 objSim.run_simulation()
