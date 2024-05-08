@@ -8,14 +8,13 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 
 
-class ObsBoundReInit_Algorithm():
+class GradNav_Peptide():
     '''
     Adam-inspired reinitialization method
     Direction of update is determined by the gradient density of observations
     '''
     def __init__(self, traj_dict, init_traj_index, beta, k, large_batch, small_batch, iter_frame, contour_frac, save_path, threshold=0.02):
         self.traj_dict = traj_dict # {trajectory index: trajectory} trajectory in a shape of (n_frames, 2)
-        #self.all_traj = all_traj # 2d array 
         self.init_point = traj_dict[init_traj_index][0] # init_point
         self.total_frame = iter_frame
         self.iter_frame = iter_frame 
@@ -29,10 +28,8 @@ class ObsBoundReInit_Algorithm():
         self.init = self.init_point
         self.last = self.init_point #np.empty(2)
         self.cent = np.empty(2)
-        #self.collected_trajs = np.empty([self.large_batch, 2]) # change the name to collected_outer_trajs
         self.collected_outer_trajs = np.empty([self.large_batch, 2])
         self.collected_all_trajs = []
-        # self.update_rates = []
         self.kde = None 
         self.paths = None
         self.outer_results = {}
@@ -63,7 +60,6 @@ class ObsBoundReInit_Algorithm():
                 self.cent = np.mean(scout_traj[1:], axis=0)
                 self.iter_frame -= len(scout_traj)
                 self.inner_results.update({(i, j): [proposed_init, self.init, prev_last, update_rate]}) 
-                # [proposed init for current run, actual init point of current run, last point of previous run, update rate]
                 self.collected_all_trajs.append(scout_traj)
                 j+=1
 
@@ -113,12 +109,8 @@ class ObsBoundReInit_Algorithm():
         if (not candidate_trajs) and (global_closest_traj is not None) and (len(global_closest_traj[global_closest_index:]) >= n_frames):
             candidate_trajs.append(global_closest_traj[global_closest_index:global_closest_index+n_frames])
             candidate_trajs_index.append((global_closest_traj_index, global_closest_index, global_closest_index+n_frames))
-            #self.coord_index.update({global_closest_traj_index: (global_closest_index, global_closest_index+n_frames)})
         
         # Choose a random item from the list
-        # breakpoint()
-        #chosen_traj = random.choice(candidate_trajs) if candidate_trajs else None
-        #chosen_index = candidate_trajs.index(chosen_traj) if chosen_traj else None
         if candidate_trajs:
             # Select a random index within the range of candidate_trajs' indices
             chosen_index = random.randint(0, len(candidate_trajs) - 1)
@@ -129,7 +121,7 @@ class ObsBoundReInit_Algorithm():
             chosen_index = None
             chosen_traj = None
         return chosen_traj, candidate_trajs_index[chosen_index]
-        #return random.choice(candidate_trajs) if candidate_trajs else None
+
     
     def gradient_at_point(self):
         x, y = self.last
@@ -289,42 +281,6 @@ def reconstruct_energy(data, bin_number=500):
     f = -np.log(probs)
     fn = f - np.min(f)
     return anchors, fn 
-
-# def find_shift_index(coordinates, shift_axis, shift_threshold, num_threshold):
-#     """
-#     Finds the index of the frame where a significant shift happens along a specified axis.
-
-#     Parameters:
-#     - coordinates: A 2D numpy array of shape (n, 2) where n is the number of frames, and each row contains (x, y) coordinates.
-#     - shift_axis: A string, either 'x' or 'y', indicating the axis along which to detect the shift.
-#     - threshold: A float, the minimum difference between consecutive frames to consider as a shift.
-
-#     Returns:
-#     - The index of the first frame where the shift exceeds the threshold, or None if no such shift is found.
-#     """
-    
-#     axis_index = 0 if shift_axis == 'x' else 1  # 0 for x-axis, 1 for y-axis
-    
-#     # Find the first index
-#     if coordinates[:, axis_index][0] > shift_threshold:
-#         shift_indices = np.where(coordinates[:, axis_index] < shift_threshold)[0]
-#     elif coordinates[:, axis_index][0] < shift_threshold:
-#         shift_indices = np.where(coordinates[:, axis_index] > shift_threshold)[0]
-
-#     if len(shift_indices) > 0:
-#         for i in range(1, len(shift_indices)):
-#             #if shift_indices[i] - shift_indices[i-1] > num_threshold:
-#             if (coordinates[:, axis_index][0] - shift_threshold) * (coordinates[i:i+num_threshold, axis_index] - shift_threshold).all():    
-#                 return shift_indices[i]
-#             else:
-#                 print('not a stable transition')
-#                 return None
-#             # else:
-#             #     return shift_indices[0] # grab the first index
-#         #return shift_indices[0] # grab the first index
-#     else:
-#         print('no shift')
-#         return None  # No shift found
 
 def find_shift_index(coordinates, shift_axis, shift_threshold, num_threshold=10):
     """

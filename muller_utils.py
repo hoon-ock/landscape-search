@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import numpy as np
 
-class ObsBoundReInit():
+class GradNav_LD():
     '''
     Adam-inspired reinitialization method
     Direction of update is determined by the gradient density
